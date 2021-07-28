@@ -28,28 +28,7 @@ def create_projector(geom, numbin, angles, dso, dod, fan_angle):
 
     p = astra.create_projector('strip_fanflat',proj_geom,vol_geom);
     return p
-    
-def grad_TV(img,numpix):
-    #pdb.set_trace()
-    epsilon = 1e-6
-    ind_m1 = np.arange(numpix)
-    ind_m2 = [(i + 1) % numpix for i in ind_m1]
-    ind_m0 = [(i - 1) % numpix for i in ind_m1]
 
-    m2m1 = np.ix_(ind_m2,ind_m1)
-    m1m2 = np.ix_(ind_m1,ind_m2)
-    m0m1 = np.ix_(ind_m0,ind_m1)
-    m1m0 = np.ix_(ind_m1,ind_m0)
-    
-    diff1 = ( img[m2m1] - img) ** 2
-    diff2 = ( img[m1m2] - img) ** 2
-    diffttl = np.sqrt( diff1 + diff2 + epsilon**2)
-    TV = np.sum(diffttl)
-
-    dTV = -1/diffttl * (img[m2m1]-2*img + img[m1m2]) + \
-          1/diffttl[m0m1] * (img-img[m0m1]) + \
-          1/diffttl[m1m0] * (img-img[m1m0])
-    return TV, dTV
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--sino', dest='infile', default='.', help='input sinogram -- directory or single file')
@@ -70,6 +49,7 @@ parser.add_argument('--x0',dest='x0_file',default='',help='initial image (defaul
 parser.add_argument('--xtrue',dest='xtrue_file',default='',help='true image (if available)')
 parser.add_argument('--sup_params',dest='sup_params', type=float,nargs=3,help='superiorization parameters gamma, N, alpha_init')
 parser.add_argument('--epsilon_target',dest='epsilon_target',default=0.,help='target residual value to stop (float or file with residual values)')
+parser.add_argument('--ckpt_dir',dest='ckpt_dir',default='./checkpoint',help='directory containing checkpoint for DnCnn')
 
 #get arguments from command line
 args = parser.parse_args()
@@ -80,7 +60,7 @@ theta_range, geom, dso, dod, fan_angle = args.theta_range, args.geom, args.dso, 
 if args.sup_params is None:
     use_sup = False
 else:
-     use_sup = True
+    use_sup = True
           
 eps = np.finfo(float).eps
 
@@ -138,6 +118,16 @@ for j in range(ns):
     Minv[j] = np.maximum(Minv[j],eps)
     P[j] = p
 res_file = open(outfile+"/residuals.txt","w+") #file to store residuals
+
+if use_sup:
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)    
+        sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        model = denoiser(sess)
+        tf.initialize_all_variables().run(session=model.sess)
+        load_model_status, global_step = model.load(args.ckpt_dir)
+        assert load_model_status == True, '[!] Load weights FAILED...'
+        print(" [*] Load weights SUCCESS...")
+
 for name in fnames:
 #    pdb.set_trace()
     #read in sinogram
@@ -162,25 +152,25 @@ for name in fnames:
         gamma = args.sup_params[0]
         N = np.uint8(args.sup_params[1])
         alpha = args.sup_params[2]
-        
+    
     for k in range(numits):
         #Superiorization loop
-     if use_sup:
-        #pdb.set_trace()
-        g,dg = grad_TV(f,numpix)
-        g_old = g;
-        dg = -dg / (np.linalg.norm(dg,'fro') + eps)
-        for j in range(N):
-            while True:
-                f_tmp = f + alpha * dg
-                g_new = grad_TV(f_tmp,numpix)[0]
-                alpha = alpha*gamma
-                if g_new <= g_old:
-                    f = f_tmp
-                    break
-
-            dg = grad_TV(f,numpix)[1]
-            dg = -dg / (np.linalg.norm(dg,'fro') + eps)
+        if use_sup:
+            f_out = model.run(f)
+            #pdb.set_trace()
+            p = f_out - f
+            pnorm = np.linalg.norm(p,'fro')+eps
+            if pnorm > alpha:
+                p = alpha*p/ (np.linalg.norm(p,'fro')+eps)
+                f = f + p
+            else:
+                f = f_out
+            alpha = alpha*gamma
+            #img = (f.T/np.amax(f)) * 255
+            #img = np.round(img)
+            #im = Image.fromarray(img.astype('uint8')).convert('L')
+            #im.save(outname+'_'+str(k)+'sup.png','png')
+ 
 
         #SART loop
         for j in range(ns):
@@ -237,7 +227,6 @@ for name in fnames:
     img = np.round(img)
     im = Image.fromarray(img.astype('uint8')).convert('L')
     im.save(outname+'.png','png')
-
     # plt.figure(1)
     # plt.style.use('grayscale')
     # plt.imshow(img.T) #transpose image
