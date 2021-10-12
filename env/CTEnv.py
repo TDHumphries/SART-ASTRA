@@ -19,20 +19,20 @@ class CTEnv(Env):
         # Image / sinogram dimensions
         self.numpix = 512     #image size
         self.numtheta = 90    #90 views for sparse-view simulation
-	self.numbin = 729     #number of projection bins
+        self.numbin = 729     #number of projection bins
         self.dx = 0.0568      #assumed pixel size
 
         #fan beam parameters
-	self.geom = 'fanflat'		#could be parallel as well
-	self.dso, self.dod  = 100, 100 #source-object and object-detector distances
-	self.fan_angle = 35		#fanbeam angle
-	self.P, self.D, self.M = projNorms()   #projection operation and SART matrices
+        self.geom = 'fanflat'		#could be parallel as well
+        self.dso, self.dod  = 100, 100 #source-object and object-detector distances
+        self.fan_angle = 35		#fanbeam angle
+        self.P, self.D, self.M = projNorms()   #projection operation and SART matrices
 	
 	#sinogram and true image (used to compute reward)
-	self.sino = np.fromfile('sinogram_name.flt',dtype='f')
-	self.sino = self.sino.reshape(self.numtheta,self.numbin)
-	self.x_true = np.fromfile('true_image_name.flt',dtype='f')
-	self.x_true = self.x_true.reshape(self.numpix,self.numpix)
+        self.sino = np.fromfile('sinogram_name.flt',dtype='f')
+        self.sino = self.sino.reshape(self.numtheta,self.numbin)
+        self.x_true = np.fromfile('true_image_name.flt',dtype='f')
+        self.x_true = self.x_true.reshape(self.numpix,self.numpix)
         self.state = np.zeros((numpix,numpix))   #initial image (zeroes)
 
         # Actions: SART (0) or Superiorization (1)
@@ -42,19 +42,19 @@ class CTEnv(Env):
         self.observation_space = Box(low=np.array([0]), high=np.inf, shape=(numpix,numpix))
 
         # Algorithm parameters
-	self.ns = 1
+        self.ns = 1
         self.num_its = 0
-	self.max_iters = 100
+        self.max_iters = 100
         self.alpha = 1 # makes size of pertubation go down
-	self.gamma = 0.995
+        self.gamma = 0.995
         self.beta = 1
-	self.epsilon_target = 0;
+        self.epsilon_target = 0;
 
     def step(self, action):
         f = self.state 
         # Calculate reward
         if (action == 0): # SARTi
-	    self.num_its = self.num_its+1
+            self.num_its = self.num_its+1
             for j in range(self.ns): # copied from SART.py
                 ind1 = range(j,self.numtheta,self.ns);
                 p = self.P[j]
