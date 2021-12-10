@@ -101,7 +101,7 @@ class CTEnv(Env):
 
 		# Image
 		# self.observation_space = Box(low=np.array([0]), high=np.array([self.numpix]), shape=(1,15))
-		self.observation_space = Box(low=np.array([0]), high=np.inf, shape=(numpix,numpix))
+		self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix))
 
 		# Algorithm parameters
 		self.ns = 1
@@ -167,7 +167,7 @@ class CTEnv(Env):
 		
 		# Return step information
 		self.state = f
-
+		
 		return self.state, reward, done
 
 	def render(self):
@@ -178,3 +178,6 @@ class CTEnv(Env):
 		self.state = np.zeros((self.numpix,self.numpix))
 		self.num_its = 0
 		self.alpha = 1
+		self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix))
+
+		return self.observation_space
