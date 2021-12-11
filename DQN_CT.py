@@ -24,7 +24,7 @@ pool_size = 2
 
 input_shape = (WINDOW_LENGTH, 512, 512)
 model = Sequential()
-model.add(Permute((2, 3, 1), input_shape = input_shape))
+# model.add(Permute((2, 3, 1), input_shape = input_shape))
 model.add(Convolution2D(32, 3, padding="same", input_shape=input_shape)) # nb_filters = 32, conv1_size = 3 for reference
 model.add(Activation("relu"))
 model.add(MaxPooling2D(pool_size=(pool_size, pool_size))) # reduces to 256x256
