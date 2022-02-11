@@ -24,16 +24,16 @@ pool_size = 2
 
 input_shape = (WINDOW_LENGTH, 512, 512)
 model = Sequential()
-# model.add(Permute((2, 3, 1), input_shape = input_shape))
+model.add(Permute((2, 3, 1), input_shape = input_shape))
 model.add(Convolution2D(32, 3, padding="same", input_shape=input_shape)) # nb_filters = 32, conv1_size = 3 for reference
 model.add(Activation("relu"))
 model.add(MaxPooling2D(pool_size=(pool_size, pool_size))) # reduces to 256x256
 
-model.add(Convolution2D(64, 2, padding="same")) 
+model.add(Convolution2D(64, 3, padding="same")) 
 model.add(Activation("relu"))
 model.add(MaxPooling2D(pool_size=(pool_size, pool_size))) # reduces to 128x128
 
-model.add(Convolution2D(64, 2, padding="same"))
+model.add(Convolution2D(64, 3, padding="same"))
 model.add(Activation("relu"))
 model.add(MaxPooling2D(pool_size=(pool_size, pool_size))) # reduces to 64x64 (16 million parameters)
 
@@ -57,6 +57,7 @@ dqn.compile(Adam(learning_rate=.00025), metrics=['mae'])
 # 4. Okay, now it's time to learn something! We visualize the training here for show, but this
 # slows down training quite a lot. You can always safely abort the training prematurely using
 # Ctrl + C.
+#pdb.set_trace()
 dqn.fit(env, nb_steps=50000, visualize=False, verbose=2)
 
 # 5. After training is done, we save the final weights.

@@ -73,9 +73,10 @@ def create_projector(geom, numbin, angles, dso, dod, fan_angle, numpix):
 
 class CTEnv(Env):
 	def __init__(self):
+		super(CTEnv, self).__init__()
 		# Image / sinogram dimensions
 		self.numpix = 512     #image size
-		self.numtheta = 900    #900 views for sparse-view simulation
+		self.numtheta = 90    #900 views for sparse-view simulation
 		self.numbin = 729     #number of projection bins
 		self.dx = 0.0568      #assumed pixel size
 		self.angles = np.linspace(0,self.numtheta-1,self.numtheta)*360/self.numtheta
@@ -86,8 +87,8 @@ class CTEnv(Env):
 		self.dso, self.dod  = 100, 100 #source-object and object-detector distances
 		self.fan_angle = 35		#fanbeam angle
 
-		self.sino_file = open("/data/kpeng09/SART_ASTRA/sinos/00000001_sino.flt")
-		self.x_true_file = open("/data/kpeng09/SART_ASTRA/imgs/00000000_img.flt")
+		self.sino_file = open("sinos/00000001_sino.flt")
+		self.x_true_file = open("imgs/00000001_img.flt")
 	
 		#sinogram and true image (used to compute reward)
 		self.sino = np.fromfile(self.sino_file,dtype='f') # in sinos folder
@@ -101,7 +102,7 @@ class CTEnv(Env):
 
 		# Image
 		# self.observation_space = Box(low=np.array([0]), high=np.array([self.numpix]), shape=(1,15))
-		self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix))
+		self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix),dtype=np.float32)
 
 		# Algorithm parameters
 		self.ns = 1
@@ -168,7 +169,7 @@ class CTEnv(Env):
 		# Return step information
 		self.state = f
 		
-		return self.state, reward, done
+		return self.state, reward, done, {}
 
 	def render(self):
 		# Implement viz
@@ -178,6 +179,7 @@ class CTEnv(Env):
 		self.state = np.zeros((self.numpix,self.numpix))
 		self.num_its = 0
 		self.alpha = 1
-		self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix))
+		#self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix))
 
-		return self.observation_space
+		#return self.observation_space
+		return self.state
