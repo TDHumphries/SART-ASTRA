@@ -58,7 +58,7 @@ dqn.compile(Adam(learning_rate=.00025), metrics=['mae'])
 # slows down training quite a lot. You can always safely abort the training prematurely using
 # Ctrl + C.
 #pdb.set_trace()
-dqn.fit(env, nb_steps=50000, visualize=False, verbose=2)
+dqn.fit(env, nb_steps=20000, visualize=False, verbose=2)
 
 # 5. After training is done, we save the final weights.
 dqn.save_weights(f'dqn_CTEnv_weights.h5f', overwrite=True)

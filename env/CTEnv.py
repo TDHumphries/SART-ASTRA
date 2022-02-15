@@ -105,19 +105,21 @@ class CTEnv(Env):
 		self.observation_space = Box(low=0, high=np.inf, shape=(self.numpix,self.numpix),dtype=np.float32)
 
 		# Algorithm parameters
-		self.ns = 1
+		self.ns = 10
 		self.num_its = 0
-		self.max_iters = 100
+		self.max_iters = 40
 		self.alpha = 1 # makes size of pertubation go down
 		self.gamma = 0.995
 		self.beta = 1
 		self.epsilon_target = 0
+		self.episode = 0
 
 		#projection operation and SART matrices
 		self.P, self.Dinv, self.Minv = projNorms(self.ns, self.numtheta, self.geom, self.numbin, self.angles, self.dso, self.dod, self.fan_angle, self.numpix, self.dx)   
 
 	def step(self, action):
-		f = self.state 
+		f = self.state
+		#pdb.set_trace()
 		# Calculate reward
 		if (action == 0): # SART
 			self.num_its = self.num_its+1
@@ -148,6 +150,7 @@ class CTEnv(Env):
 					break
 
 		# Reward
+		f = np.maximum(f,np.finfo(float).eps)
 		reward = np.linalg.norm(f, 'fro') / np.linalg.norm((f - self.x_true), 'fro')
 
 		# Check if code is done
@@ -163,6 +166,8 @@ class CTEnv(Env):
 
 		if ((self.num_its >= self.max_iters) or (res < self.epsilon_target)):
 			done = True
+			self.render()
+			self.episode = self.episode+1
 		else:
 			done = False
 		
@@ -172,9 +177,14 @@ class CTEnv(Env):
 		return self.state, reward, done, {}
 
 	def render(self):
-		# Implement viz
-		pass
-	
+		#pdb.set_trace()
+		plt.figure(num=1)
+		plt.style.use('grayscale')
+		plt.imshow(self.state,vmin = 0, vmax = 0.4)
+		plt.colorbar()
+		plt.savefig('training_imgs/tmp{0:d}.png'.format(self.episode))
+		plt.close()               
+			
 	def reset(self):
 		self.state = np.zeros((self.numpix,self.numpix))
 		self.num_its = 0
