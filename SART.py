@@ -10,11 +10,10 @@ import astra
 import numpy as np
 import os
 import pdb
-#import pylab
-from PIL import Image
-import tensorflow as tf
-from model import denoiser
-from utils import *
+import pylab
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt # for png conversion
 
 def create_projector(geom, numbin, angles, dso, dod, fan_angle):
     if geom == 'parallel':
@@ -26,9 +25,9 @@ def create_projector(geom, numbin, angles, dso, dod, fan_angle):
 
         proj_geom = astra.create_proj_geom(geom, det_width, numbin, angles, dso, dod)
 
-    p = astra.create_projector('strip_fanflat',proj_geom,vol_geom);
+    p = astra.create_projector('cuda',proj_geom,vol_geom);
     return p
-    
+
 def grad_TV(img,numpix):
     #pdb.set_trace()
     epsilon = 1e-6
@@ -80,7 +79,7 @@ theta_range, geom, dso, dod, fan_angle = args.theta_range, args.geom, args.dso, 
 if args.sup_params is None:
     use_sup = False
 else:
-     use_sup = True
+    use_sup = True
           
 eps = np.finfo(float).eps
 
@@ -89,7 +88,6 @@ if os.path.isdir(infile):		#generate list of filenames from directory
 else:							#single filename
     fnames = []
     fnames.append(infile)
-#fnames = fnames[204:]
 
 try:
         psizes = float(psize)      #if pixel size is a floating point value
@@ -124,7 +122,6 @@ angles = theta_range[0] + np.linspace(0,numtheta-1,numtheta,False)*(theta_range[
 #    calc_error = True
 
 calc_error = False
-    
 #create projectors and normalization terms (corresponding to diagonal matrices M and D) for each subset of projection data
 P, Dinv, D_id, Minv, M_id = [None]*ns,[None]*ns,[None]*ns,[None]*ns,[None]*ns
 for j in range(ns):
@@ -139,13 +136,13 @@ for j in range(ns):
     P[j] = p
 res_file = open(outfile+"/residuals.txt","w+") #file to store residuals
 for name in fnames:
-#    pdb.set_trace()
     #read in sinogram
     sino = np.fromfile(name,dtype='f')
     sino = sino.reshape(numtheta,numbin)
 
     head, tail = os.path.split(name)      #get name of file for output
     head, tail = tail.split("_",1)    #extract numerical part of filename only. Assumes we have ######_sino.flt
+    outname = outfile + "/" + head + "_recon.flt"
     f = np.zeros((numpix,numpix))
     try:
         dx = psizes[int(head)] #if psize being read in from file
@@ -162,27 +159,27 @@ for name in fnames:
         gamma = args.sup_params[0]
         N = np.uint8(args.sup_params[1])
         alpha = args.sup_params[2]
-        
     for k in range(numits):
         #Superiorization loop
-     if use_sup:
-        #pdb.set_trace()
-        g,dg = grad_TV(f,numpix)
-        g_old = g;
-        dg = -dg / (np.linalg.norm(dg,'fro') + eps)
-        for j in range(N):
-            while True:
-                f_tmp = f + alpha * dg
-                g_new = grad_TV(f_tmp,numpix)[0]
-                alpha = alpha*gamma
-                if g_new <= g_old:
-                    f = f_tmp
-                    break
-
-            dg = grad_TV(f,numpix)[1]
+        if use_sup:
+            #pdb.set_trace()
+            g,dg = grad_TV(f,numpix)
+            g_old = g;
             dg = -dg / (np.linalg.norm(dg,'fro') + eps)
+            for j in range(N):
+                while True:
+                    f_tmp = f + alpha * dg
+                    g_new = grad_TV(f_tmp,numpix)[0]
+                    alpha = alpha*gamma
+                    if g_new <= g_old:
+                        f = f_tmp
+                        break
+
+                dg = grad_TV(f,numpix)[1]
+                dg = -dg / (np.linalg.norm(dg,'fro') + eps)
 
         #SART loop
+        #pdb.set_trace()
         for j in range(ns):
             ind1 = range(j,numtheta,ns);
             p = P[j]
@@ -197,10 +194,6 @@ for name in fnames:
             astra.data2d.delete(bp_id)
             
         f = np.maximum(f,eps);                  #set any negative values to small positive value
-        #img = (f.T/np.amax(f)) * 255
-        #img = np.round(img)
-        #im = Image.fromarray(img.astype('uint8')).convert('L')
-        #im.save(outname+'_'+str(k)+'SART.png','png')
         
         #compute residual and error (if xtrue is provided)
         fp = np.zeros((numtheta,numbin))
@@ -220,12 +213,9 @@ for name in fnames:
              print('Iteration #{0:d}: Residual = {1:1.4f}\tError = {2:1.4f}\n'.format(k+1,res,err))
         else:
              print('Iteration #{0:d}: Residual = {1:1.4f}\n'.format(k+1,res))
-#        if (k == 0 or k == 2 or k == 5):
- #           ft = np.float32(f)
- #           ft.tofile(outfile + '/'+head+'_recon_'+str(k+1)+'.flt') 
+       
     #save image
     f = np.float32(f)
-    outname = outfile + "/" + head + "_recon_"+str(k)+".flt"
     f.tofile(outname)
 
     #save residual
@@ -233,18 +223,16 @@ for name in fnames:
 
     #**********save image as png**********
     max_pixel = np.amax(f)
-    img = (f.T/max_pixel) * 255
+    img = (f/max_pixel) * 255
     img = np.round(img)
-    im = Image.fromarray(img.astype('uint8')).convert('L')
-    im.save(outname+'.png','png')
 
-    # plt.figure(1)
-    # plt.style.use('grayscale')
-    # plt.imshow(img.T) #transpose image
-    # plt.axis('off')
-    # png_outname = (outname + '.png')
-    # plt.savefig(png_outname)
-    # plt.close()
+    plt.figure(1)
+    plt.style.use('grayscale')
+    plt.imshow(img.T) #transpose image
+    plt.axis('off')
+    png_outname = (outname + '.png')
+    plt.savefig(png_outname)
+    plt.close()
     #**************************************
 
 res_file.close()
