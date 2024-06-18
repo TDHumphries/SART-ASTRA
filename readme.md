@@ -15,31 +15,31 @@ Here are some sample command-line calls to generate different types of data from
 
 1) NDCT data
 
-python make_sino.py --in imgs/00000001_img.flt --out sinos --dx 0.0568 --range 0 360 --counts 1e6
+python make_sino.py --in imgs/00000001_img.flt --out sinos --psize 0.0568 --range 0 360 --counts 1e6
 
-python SART.py --sino sinos/00000001_sino.flt --out recons --dx 0.0568 --range 0 360 --nsubs 12 --xtrue imgs/00000001_img.flt
+python SART.py --sino sinos/00000001_sino.flt --out recons --psize 0.0568 --range 0 360 --nsubs 12 --xtrue imgs/00000001_img.flt
 
 2) LDCT data
 
-python make_sino.py --in imgs/00000001_img.flt --out sinos --dx 0.0568 --range 0 360 --counts 5e4
+python make_sino.py --in imgs/00000001_img.flt --out sinos --psize 0.0568 --range 0 360 --counts 5e4
 
-python SART.py --sino sinos/00000001_sino.flt --out recons --dx 0.0568 --range 0 360 --nsubs 12 --xtrue imgs/00000001_img.flt
+python SART.py --sino sinos/00000001_sino.flt --out recons --psize 0.0568 --range 0 360 --nsubs 12 --xtrue imgs/00000001_img.flt
 
 3) sparse view data
 
-python make_sino.py --in imgs/00000001_img.flt --out sinos --dx 0.0568 --range 0 360 --ntheta 60 --counts 1e6
+python make_sino.py --in imgs/00000001_img.flt --out sinos --psize 0.0568 --range 0 360 --ntheta 60 --counts 1e6
 
-python SART.py --sino sinos/00000001_sino.flt --out recons --dx 0.0568 --range 0 360 --nsubs 12 --ntheta 60 --xtrue imgs/00000001_img.flt
+python SART.py --sino sinos/00000001_sino.flt --out recons --psize 0.0568 --range 0 360 --nsubs 12 --ntheta 60 --xtrue imgs/00000001_img.flt
 
 4) sparse view data with superiorization
 
-python make_sino.py --in imgs/00000001_img.flt --out sinos --dx 0.0568 --range 0 360 --ntheta 60 --counts 1e6
+python make_sino.py --in imgs/00000001_img.flt --out sinos --psize 0.0568 --range 0 360 --ntheta 60 --counts 1e6
 
-python SART.py --sino sinos/00000001_sino.flt --out recons --dx 0.0568 --range 0 360 --nsubs 12 --ntheta 60 --xtrue imgs/00000001_img.flt --sup_params 0.9995 20 0.5
+python SART.py --sino sinos/00000001_sino.flt --out recons --psize 0.0568 --range 0 360 --nsubs 12 --ntheta 60 --xtrue imgs/00000001_img.flt --sup_params 0.9995 20 0.5
 
 
 5) limited angle data
 
-python make_sino.py --in imgs/00000001_img.flt --out sinos --dx 0.0568 --range 0 150 --ntheta 375 --counts 1e6
+python make_sino.py --in imgs/00000001_img.flt --out sinos --psize 0.0568 --range 0 150 --ntheta 375 --counts 1e6
 
-python SART.py --sino sinos/00000001_sino.flt --out recons --dx 0.0568 --range 0 150 --nsubs 15 --ntheta 375 --xtrue imgs/00000001_img.flt
+python SART.py --sino sinos/00000001_sino.flt --out recons --psize 0.0568 --range 0 150 --nsubs 15 --ntheta 375 --xtrue imgs/00000001_img.flt
