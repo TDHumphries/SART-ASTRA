@@ -11,8 +11,10 @@ import numpy as np
 import os
 import pdb
 import pylab
-#import matplotlib.pyplot as plt
-from PIL import Image
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--in', dest='infile', default='.', help='input file -- directory or single file')
@@ -43,6 +45,7 @@ if os.path.isdir(infile):		#generate list of filenames from directory
 else:							#single filename
     fnames = []
     fnames.append(infile)        
+
 try:
 	psizes = float(psize)				#if pixel size is a floating point value
 except ValueError:					
@@ -91,10 +94,15 @@ for name in fnames:
        #**********save image as png**********
     max_pixel = np.amax(sino)
     img = (sino/max_pixel) * 255
-    img = np.round(img.T)
+    img = np.round(img)
 
-    im = Image.fromarray(img.astype('uint8')).convert('L')
-    im.save(fileout+'.png','png')
+    plt.figure(1)
+    plt.style.use('grayscale')
+    plt.imshow(img.T) #transpose image
+    plt.axis('off')
+    png_outname = (fileout + '.png')
+    plt.savefig(png_outname)
+    plt.close()
 		
     astra.data2d.delete(sino_id)    
 
