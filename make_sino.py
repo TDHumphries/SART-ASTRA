@@ -67,7 +67,7 @@ elif geom == 'fanflat':
 
     proj_geom = astra.create_proj_geom(geom, det_width, numbin, angles, dso, dod)
 
-p = astra.create_projector('strip_fanflat',proj_geom,vol_geom);
+p = astra.create_projector('cuda',proj_geom,vol_geom);
         
 
 #create sinogram
